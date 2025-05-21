@@ -29,7 +29,7 @@ const orderSchema = z.object({
   fullName: z.string().min(2, { message: "Name must be at least 2 characters." }),
   phoneNumber: z.string().min(10, { message: "Please enter a valid phone number." }),
   printType: z.string(),
-  copies: z.string().transform((val) => parseInt(val, 10)),
+  copies: z.coerce.number().min(1), // Convert string to number during validation
   paperSize: z.string(),
   specialInstructions: z.string().optional(),
 });
@@ -47,7 +47,7 @@ const OrderForm = () => {
       fullName: "",
       phoneNumber: "",
       printType: "blackAndWhite",
-      copies: "1",
+      copies: 1, // Changed from string "1" to number 1
       paperSize: "a4",
       specialInstructions: "",
     },
@@ -164,8 +164,8 @@ const OrderForm = () => {
                   <FormItem>
                     <FormLabel>Number of Copies</FormLabel>
                     <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
+                      onValueChange={(value) => field.onChange(Number(value))}
+                      defaultValue={field.value.toString()}
                     >
                       <FormControl>
                         <SelectTrigger>
