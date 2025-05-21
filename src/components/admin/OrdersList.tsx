@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { File, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
+import { fileStorage } from '@/services/fileStorage';
 
 type OrderFile = {
   name: string;
@@ -95,39 +96,26 @@ const OrdersList = () => {
 
   const handleFileDownload = (file: OrderFile) => {
     try {
-      // In a real app, this would download from the server
-      // For demonstration, we'll use file system API or stored path
-      if (file.path) {
-        // Fetch the file from the path
-        fetch(`/uploads/${file.name}`)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
-            return response.blob();
-          })
-          .then(blob => {
-            // Create a URL for the blob
-            const url = window.URL.createObjectURL(blob);
-            // Create a temporary anchor element
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = file.name;
-            document.body.appendChild(a);
-            // Trigger download
-            a.click();
-            // Clean up
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-            toast.success(`Downloading ${file.name}`);
-          })
-          .catch(error => {
-            console.error('Error downloading file:', error);
-            toast.error(`Failed to download ${file.name}`);
-          });
+      // Use the fileStorage service directly to get and download the file
+      const storedFile = fileStorage.getFile(file.path);
+      
+      if (storedFile?.data) {
+        // Create a URL for the blob
+        const url = URL.createObjectURL(storedFile.data);
+        // Create a temporary anchor element
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        // Trigger download
+        a.click();
+        // Clean up
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success(`Downloading ${file.name}`);
       } else {
-        toast.error("File path not available");
+        toast.error("File data not available");
       }
     } catch (error) {
       console.error('Error handling file download:', error);
