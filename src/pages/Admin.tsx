@@ -5,7 +5,7 @@ import PageLayout from '@/components/layout/PageLayout';
 import OrdersList from '@/components/admin/OrdersList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, Download } from "lucide-react";
+import { LogOut, Download, FileText } from "lucide-react";  // Added FileText import here
 import { fileStorage } from '@/services/fileStorage';
 import { toast } from "sonner";
 
