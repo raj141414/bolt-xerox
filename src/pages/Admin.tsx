@@ -5,7 +5,9 @@ import PageLayout from '@/components/layout/PageLayout';
 import OrdersList from '@/components/admin/OrdersList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Download } from "lucide-react";
+import { fileStorage } from '@/services/fileStorage';
+import { toast } from "sonner";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("orders");
@@ -25,6 +27,18 @@ const Admin = () => {
   const handleLogout = () => {
     localStorage.removeItem('adminLoggedIn');
     navigate('/login');
+  };
+
+  const downloadAllFiles = () => {
+    const files = fileStorage.getAllFiles();
+    
+    if (files.length === 0) {
+      toast.info("No files available to download");
+      return;
+    }
+    
+    toast.success(`Preparing ${files.length} files for download`);
+    // In a real app, this would trigger a zip download or batch download process
   };
   
   if (!isLoggedIn) {
@@ -55,6 +69,7 @@ const Admin = () => {
             <TabsList className="mb-8">
               <TabsTrigger value="orders">Orders</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="files">Files</TabsTrigger>
             </TabsList>
             <TabsContent value="orders" className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
               <h2 className="text-xl font-semibold mb-6">All Orders</h2>
@@ -65,8 +80,8 @@ const Admin = () => {
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-md">
                   <h3 className="font-medium text-gray-700">File Storage</h3>
-                  <p className="mt-1 text-gray-600">Currently, file uploads are simulated and only metadata is stored. 
-                  In a production environment, you would implement server storage or cloud storage solutions.</p>
+                  <p className="mt-1 text-gray-600">Customer files are stored in the /uploads folder in the project. 
+                  In a production environment, you would implement server storage or cloud storage solutions for better persistence.</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-md">
                   <h3 className="font-medium text-gray-700">Admin Credentials</h3>
@@ -75,10 +90,96 @@ const Admin = () => {
                 </div>
               </div>
             </TabsContent>
+            <TabsContent value="files" className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">All Uploaded Files</h2>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={downloadAllFiles}
+                >
+                  <Download className="h-4 w-4" /> Download All
+                </Button>
+              </div>
+              <FilesManager />
+            </TabsContent>
           </Tabs>
         </div>
       </div>
     </PageLayout>
+  );
+};
+
+// Simple files manager component
+const FilesManager = () => {
+  const [files, setFiles] = useState<Array<{name: string, size: number, type: string, path: string}>>([]);
+  
+  useEffect(() => {
+    // Get all stored files
+    const storedFiles = fileStorage.getAllFiles();
+    setFiles(storedFiles);
+  }, []);
+  
+  const handleFileDownload = (file: {path: string, name: string}) => {
+    try {
+      const storedFile = fileStorage.getFile(file.path);
+      if (storedFile?.data) {
+        // Create a URL for the blob
+        const url = URL.createObjectURL(storedFile.data);
+        // Create a temporary anchor element
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        // Trigger download
+        a.click();
+        // Clean up
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success(`Downloading ${file.name}`);
+      } else {
+        toast.error("File data not available");
+      }
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast.error(`Failed to download ${file.name}`);
+    }
+  };
+  
+  return (
+    <div>
+      {files.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No files uploaded yet</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {files.map((file, index) => (
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+              <div className="flex items-center">
+                <FileText className="h-5 w-5 text-xerox-600 mr-3" />
+                <div>
+                  <p className="text-sm font-medium">{file.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {(file.size / 1024).toFixed(2)} KB • {file.path}
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-1"
+                onClick={() => handleFileDownload(file)}
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 

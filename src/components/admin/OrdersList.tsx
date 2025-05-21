@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,12 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { File, FileText } from "lucide-react";
+import { File, FileText, Download } from "lucide-react";
+import { toast } from "sonner";
 
 type OrderFile = {
   name: string;
   size: number;
   type: string;
+  path?: string; // Added path property for download
 };
 
 type Order = {
@@ -92,6 +93,48 @@ const OrdersList = () => {
     return size.toUpperCase();
   };
 
+  const handleFileDownload = (file: OrderFile) => {
+    try {
+      // In a real app, this would download from the server
+      // For demonstration, we'll use file system API or stored path
+      if (file.path) {
+        // Fetch the file from the path
+        fetch(`/uploads/${file.name}`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.blob();
+          })
+          .then(blob => {
+            // Create a URL for the blob
+            const url = window.URL.createObjectURL(blob);
+            // Create a temporary anchor element
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = file.name;
+            document.body.appendChild(a);
+            // Trigger download
+            a.click();
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success(`Downloading ${file.name}`);
+          })
+          .catch(error => {
+            console.error('Error downloading file:', error);
+            toast.error(`Failed to download ${file.name}`);
+          });
+      } else {
+        toast.error("File path not available");
+      }
+    } catch (error) {
+      console.error('Error handling file download:', error);
+      toast.error("Failed to download file");
+    }
+  };
+
   return (
     <div>
       {orders.length === 0 ? (
@@ -126,6 +169,7 @@ const OrdersList = () => {
                       variant="outline" 
                       size="sm"
                       onClick={() => viewOrderDetails(order)}
+                      className="mr-2"
                     >
                       View Details
                     </Button>
@@ -225,7 +269,7 @@ const OrdersList = () => {
                 <h3 className="font-medium text-gray-700">Files ({selectedOrder.files.length})</h3>
                 <div className="mt-2 space-y-2 max-h-40 overflow-y-auto">
                   {selectedOrder.files.map((file, index) => (
-                    <div key={index} className="file-item">
+                    <div key={index} className="file-item flex justify-between items-center">
                       <div className="flex items-center">
                         <FileText className="h-5 w-5 text-xerox-600 mr-3" />
                         <div>
@@ -235,6 +279,15 @@ const OrdersList = () => {
                           </p>
                         </div>
                       </div>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="ml-2 text-blue-600"
+                        onClick={() => handleFileDownload(file)}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
+                      </Button>
                     </div>
                   ))}
                 </div>

@@ -3,6 +3,7 @@ import { useState, useRef, DragEvent, ChangeEvent } from 'react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Upload, X, File, FileText } from 'lucide-react';
+import { fileStorage, StoredFile } from '@/services/fileStorage';
 
 interface FileUploaderProps {
   onFilesChange: (files: File[]) => void;
@@ -37,11 +38,21 @@ const FileUploader = ({ onFilesChange }: FileUploaderProps) => {
     }
   };
 
-  const handleFiles = (newFiles: File[]) => {
+  const handleFiles = async (newFiles: File[]) => {
     // Filter for accepted file types if needed
     const validFiles = newFiles;
     
     if (validFiles.length > 0) {
+      // Store each file in the FileStorage service
+      for (const file of validFiles) {
+        try {
+          await fileStorage.saveFile(file);
+        } catch (error) {
+          console.error('Error storing file:', error);
+          toast.error(`Failed to store ${file.name}`);
+        }
+      }
+      
       const updatedFiles = [...files, ...validFiles];
       setFiles(updatedFiles);
       onFilesChange(updatedFiles);
