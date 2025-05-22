@@ -68,7 +68,19 @@ class FileStorageService {
   
   // Get a file by path
   public getFile(path: string): StoredFile | undefined {
-    return this.filesMap.get(path);
+    if (!path) {
+      console.error('Attempted to get file with undefined path');
+      return undefined;
+    }
+    
+    const file = this.filesMap.get(path);
+    
+    if (!file) {
+      console.log('File not found:', path);
+      console.log('Available files:', Array.from(this.filesMap.keys()));
+    }
+    
+    return file;
   }
   
   // Get all stored files

@@ -97,36 +97,46 @@ const OrdersList = () => {
 
   const handleFileDownload = (file: OrderFile) => {
     try {
-      // Get the file path from the file object
-      const filePath = file.path;
-      
-      if (!filePath) {
+      if (!file.path) {
+        console.error("No file path available:", file);
         toast.error("File path not available");
         return;
       }
       
-      // Use the fileStorage service to retrieve the file
-      const storedFile = fileStorage.getFile(filePath);
+      console.log("Attempting to download file with path:", file.path);
       
-      if (storedFile?.data) {
-        // Create a URL for the blob
-        const url = URL.createObjectURL(storedFile.data);
-        // Create a temporary anchor element
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        // Trigger download
-        a.click();
-        // Clean up
-        URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        toast.success(`Downloading ${file.name}`);
-      } else {
-        console.error("File not found:", filePath);
-        toast.error("File data not available. The file may not be properly stored.");
+      // Use the fileStorage service to retrieve the file
+      const storedFile = fileStorage.getFile(file.path);
+      
+      if (!storedFile) {
+        console.error("File not found in storage:", file.path);
+        toast.error("File not found in storage");
+        return;
       }
+      
+      if (!storedFile.data) {
+        console.error("File data is missing:", file.path);
+        toast.error("File data is not available");
+        return;
+      }
+      
+      // Create a URL for the blob
+      const url = URL.createObjectURL(storedFile.data);
+      
+      // Create a temporary anchor element
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      
+      // Trigger download
+      a.click();
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success(`Downloading ${file.name}`);
     } catch (error) {
       console.error('Error handling file download:', error);
       toast.error("Failed to download file");
