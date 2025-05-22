@@ -99,6 +99,12 @@ class FileStorageService {
     return Array.from(this.filesMap.values());
   }
   
+  // Clear all stored files
+  public clearAllFiles(): void {
+    this.filesMap.clear();
+    this.persistToLocalStorage();
+  }
+  
   // Save current state to localStorage
   private persistToLocalStorage(): void {
     try {

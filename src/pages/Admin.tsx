@@ -5,13 +5,25 @@ import PageLayout from '@/components/layout/PageLayout';
 import OrdersList from '@/components/admin/OrdersList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, Download, FileText } from "lucide-react";  // Added FileText import here
+import { LogOut, Download, FileText, Trash2 } from "lucide-react";
 import { fileStorage } from '@/services/fileStorage';
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("orders");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showClearFilesDialog, setShowClearFilesDialog] = useState(false);
+  const [showClearOrdersDialog, setShowClearOrdersDialog] = useState(false);
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -39,6 +51,20 @@ const Admin = () => {
     
     toast.success(`Preparing ${files.length} files for download`);
     // In a real app, this would trigger a zip download or batch download process
+  };
+
+  const clearAllFiles = () => {
+    fileStorage.clearAllFiles();
+    toast.success("All uploaded files have been cleared");
+    setShowClearFilesDialog(false);
+  };
+
+  const clearAllOrders = () => {
+    localStorage.setItem('xeroxOrders', JSON.stringify([]));
+    toast.success("All orders have been cleared");
+    setShowClearOrdersDialog(false);
+    // Force reload the component to update UI
+    window.location.reload();
   };
   
   if (!isLoggedIn) {
@@ -72,7 +98,16 @@ const Admin = () => {
               <TabsTrigger value="files">Files</TabsTrigger>
             </TabsList>
             <TabsContent value="orders" className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-              <h2 className="text-xl font-semibold mb-6">All Orders</h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">All Orders</h2>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                  onClick={() => setShowClearOrdersDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4" /> Clear All Orders
+                </Button>
+              </div>
               <OrdersList />
             </TabsContent>
             <TabsContent value="settings" className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
@@ -93,19 +128,64 @@ const Admin = () => {
             <TabsContent value="files" className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold">All Uploaded Files</h2>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={downloadAllFiles}
-                >
-                  <Download className="h-4 w-4" /> Download All
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-2"
+                    onClick={downloadAllFiles}
+                  >
+                    <Download className="h-4 w-4" /> Download All
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-2 text-red-600 border-red-200 hover:bg-red-50"
+                    onClick={() => setShowClearFilesDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4" /> Clear All Files
+                  </Button>
+                </div>
               </div>
               <FilesManager />
             </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      {/* Alert Dialog for clearing files */}
+      <AlertDialog open={showClearFilesDialog} onOpenChange={setShowClearFilesDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear All Files</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to clear all uploaded files? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={clearAllFiles} className="bg-red-600 hover:bg-red-700">
+              Yes, Clear All Files
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alert Dialog for clearing orders */}
+      <AlertDialog open={showClearOrdersDialog} onOpenChange={setShowClearOrdersDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear All Orders</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to clear all orders? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={clearAllOrders} className="bg-red-600 hover:bg-red-700">
+              Yes, Clear All Orders
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 };
