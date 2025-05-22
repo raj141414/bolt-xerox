@@ -78,6 +78,17 @@ class FileStorageService {
     if (!file) {
       console.log('File not found:', path);
       console.log('Available files:', Array.from(this.filesMap.keys()));
+      
+      // Try to find by name as fallback
+      const fileName = path.split('/').pop();
+      if (fileName) {
+        for (const [, storedFile] of this.filesMap) {
+          if (storedFile.name === fileName) {
+            console.log(`Found file by name instead: ${fileName}`);
+            return storedFile;
+          }
+        }
+      }
     }
     
     return file;

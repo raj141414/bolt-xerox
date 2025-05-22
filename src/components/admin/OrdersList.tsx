@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { File, FileText, Download } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { fileStorage } from '@/services/fileStorage';
 
@@ -18,7 +17,7 @@ type OrderFile = {
   name: string;
   size: number;
   type: string;
-  path?: string; // Added path property for download
+  path?: string;
 };
 
 type Order = {
@@ -42,7 +41,28 @@ const OrdersList = () => {
   useEffect(() => {
     // In a real app, you would fetch from an API
     const storedOrders = JSON.parse(localStorage.getItem('xeroxOrders') || '[]');
-    setOrders(storedOrders);
+    
+    // Process orders to ensure all files have paths
+    const processedOrders = storedOrders.map((order: Order) => {
+      // Ensure all files in the order have proper paths
+      const processedFiles = order.files.map(file => {
+        if (!file.path) {
+          // Create a standard path format if it's missing
+          file.path = `/uploads/${file.name}`;
+          console.log(`Added missing path for file: ${file.name}`, file);
+        }
+        return file;
+      });
+      
+      return {
+        ...order,
+        files: processedFiles
+      };
+    });
+    
+    setOrders(processedOrders);
+    // Also update localStorage with the fixed data
+    localStorage.setItem('xeroxOrders', JSON.stringify(processedOrders));
   }, []);
 
   const handleStatusChange = (orderId: string, newStatus: string) => {
@@ -98,9 +118,9 @@ const OrdersList = () => {
   const handleFileDownload = (file: OrderFile) => {
     try {
       if (!file.path) {
-        console.error("No file path available:", file);
-        toast.error("File path not available");
-        return;
+        // If path is still missing, create it based on filename
+        file.path = `/uploads/${file.name}`;
+        console.log("Created missing path for file:", file);
       }
       
       console.log("Attempting to download file with path:", file.path);
@@ -110,6 +130,37 @@ const OrdersList = () => {
       
       if (!storedFile) {
         console.error("File not found in storage:", file.path);
+        
+        // List available files for debugging
+        const allFiles = fileStorage.getAllFiles();
+        console.log("Available files in storage:", allFiles.map(f => f.path));
+        
+        // Try to find by name as fallback
+        const fileByName = allFiles.find(f => f.name === file.name);
+        if (fileByName) {
+          console.log("Found file by name instead:", fileByName);
+          
+          // Create a URL for the blob
+          const url = fileStorage.createDownloadUrl(fileByName);
+          if (url) {
+            // Create a temporary anchor element
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = file.name;
+            document.body.appendChild(a);
+            
+            // Trigger download
+            a.click();
+            
+            // Clean up
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success(`Downloading ${file.name}`);
+            return;
+          }
+        }
+        
         toast.error("File not found in storage");
         return;
       }
