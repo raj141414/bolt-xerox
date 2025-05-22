@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -96,8 +97,16 @@ const OrdersList = () => {
 
   const handleFileDownload = (file: OrderFile) => {
     try {
-      // Use the fileStorage service directly to get and download the file
-      const storedFile = fileStorage.getFile(file.path);
+      // Get the file path from the file object
+      const filePath = file.path;
+      
+      if (!filePath) {
+        toast.error("File path not available");
+        return;
+      }
+      
+      // Use the fileStorage service to retrieve the file
+      const storedFile = fileStorage.getFile(filePath);
       
       if (storedFile?.data) {
         // Create a URL for the blob
@@ -115,7 +124,8 @@ const OrdersList = () => {
         document.body.removeChild(a);
         toast.success(`Downloading ${file.name}`);
       } else {
-        toast.error("File data not available");
+        console.error("File not found:", filePath);
+        toast.error("File data not available. The file may not be properly stored.");
       }
     } catch (error) {
       console.error('Error handling file download:', error);
