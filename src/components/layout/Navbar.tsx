@@ -13,7 +13,7 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-xerox-700">XeroxShop</span>
+              <span className="text-2xl font-bold text-xerox-700">Aishwarya xerox</span>
             </Link>
           </div>
           
@@ -23,6 +23,9 @@ const Navbar = () => {
             </Link>
             <Link to="/order" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-xerox-700">
               Place Order
+            </Link>
+            <Link to="/track" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-xerox-700">
+              Track Order
             </Link>
             <Link to="/admin" className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-xerox-700">
               Admin
@@ -58,6 +61,13 @@ const Navbar = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               Place Order
+            </Link>
+            <Link 
+              to="/track" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-xerox-700"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Track Order
             </Link>
             <Link 
               to="/admin" 
