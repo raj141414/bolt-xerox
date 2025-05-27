@@ -1,8 +1,7 @@
-
 import PageLayout from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Printer, Copy, FileText, CheckCircle, Clock } from 'lucide-react';
+import { Printer, Copy, FileText, CheckCircle, Clock, BookOpen, Image, Bookmark } from 'lucide-react';
 
 const Home = () => {
   return (
@@ -48,35 +47,63 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-              <div className="w-12 h-12 bg-xerox-100 rounded-lg flex items-center justify-center">
-                <Copy className="h-6 w-6 text-xerox-600" />
-              </div>
-              <h3 className="mt-4 text-xl font-medium text-gray-900">Document Printing</h3>
-              <p className="mt-2 text-gray-600">
-                High-quality printing for documents, reports, presentations, and more.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-              <div className="w-12 h-12 bg-xerox-100 rounded-lg flex items-center justify-center">
-                <FileText className="h-6 w-6 text-xerox-600" />
-              </div>
-              <h3 className="mt-4 text-xl font-medium text-gray-900">Copy Services</h3>
-              <p className="mt-2 text-gray-600">
-                Fast and reliable copying for all your business and personal needs.
-              </p>
-            </div>
-
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
               <div className="w-12 h-12 bg-xerox-100 rounded-lg flex items-center justify-center">
                 <Printer className="h-6 w-6 text-xerox-600" />
               </div>
-              <h3 className="mt-4 text-xl font-medium text-gray-900">Photo Printing</h3>
+              <h3 className="mt-4 text-xl font-medium text-gray-900">Printing</h3>
               <p className="mt-2 text-gray-600">
-                High-resolution photo printing on premium paper for vibrant results.
+                High-quality printing for documents, reports, presentations, and more.
               </p>
+              <Button className="mt-4 w-full bg-xerox-600 hover:bg-xerox-700">
+                <Link to="/order" className="text-white">
+                  Order Now
+                </Link>
+              </Button>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+              <div className="w-12 h-12 bg-xerox-100 rounded-lg flex items-center justify-center">
+                <BookOpen className="h-6 w-6 text-xerox-600" />
+              </div>
+              <h3 className="mt-4 text-xl font-medium text-gray-900">Spiral Binding</h3>
+              <p className="mt-2 text-gray-600">
+                Professional spiral binding for documents, reports, and presentations.
+              </p>
+              <Button className="mt-4 w-full bg-xerox-600 hover:bg-xerox-700">
+                <Link to="/order" className="text-white">
+                  Order Now
+                </Link>
+              </Button>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+              <div className="w-12 h-12 bg-xerox-100 rounded-lg flex items-center justify-center">
+                <Bookmark className="h-6 w-6 text-xerox-600" />
+              </div>
+              <h3 className="mt-4 text-xl font-medium text-gray-900">Project Binding</h3>
+              <p className="mt-2 text-gray-600">
+                Complete project binding solutions for academic and professional needs.
+              </p>
+              <Button className="mt-4 w-full bg-xerox-600 hover:bg-xerox-700">
+                <Link to="/order" className="text-white">
+                  Order Now
+                </Link>
+              </Button>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+              <div className="w-12 h-12 bg-xerox-100 rounded-lg flex items-center justify-center">
+                <Image className="h-6 w-6 text-xerox-600" />
+              </div>
+              <h3 className="mt-4 text-xl font-medium text-gray-900">Photo Frame</h3>
+              <p className="mt-2 text-gray-600">
+                Coming Soon! Professional photo framing services for your memories.
+              </p>
+              <Button className="mt-4 w-full" variant="outline" disabled>
+                Coming Soon
+              </Button>
             </div>
           </div>
         </div>
