@@ -53,8 +53,8 @@ const Home = () => {
               <h3 className="text-2xl font-bold text-gray-900 mb-4 underline decoration-2">Printing</h3>
               <div className="mb-6">
                 <img 
-                  src="https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&q=80&w=300&h=200" 
-                  alt="Professional printing services with documents" 
+                  src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&q=80&w=300&h=200" 
+                  alt="Professional document printing and paper services" 
                   className="w-full h-40 object-cover rounded-lg"
                 />
               </div>
@@ -70,8 +70,8 @@ const Home = () => {
               <h3 className="text-2xl font-bold text-gray-900 mb-4 underline decoration-2">sprial binding</h3>
               <div className="mb-6">
                 <img 
-                  src="https://images.unsplash.com/photo-1587613847022-473e31c6e4c8?auto=format&fit=crop&q=80&w=300&h=200" 
-                  alt="Spiral bound notebooks and documents" 
+                  src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&q=80&w=300&h=200" 
+                  alt="Professional spiral binding for notebooks and documents" 
                   className="w-full h-40 object-cover rounded-lg"
                 />
               </div>
@@ -87,8 +87,8 @@ const Home = () => {
               <h3 className="text-2xl font-bold text-gray-900 mb-4 underline decoration-2">project binding</h3>
               <div className="mb-6">
                 <img 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300&h=200" 
-                  alt="Professional project binding and thesis binding" 
+                  src="https://images.unsplash.com/photo-1544716278-e7c2e2eea31a?auto=format&fit=crop&q=80&w=300&h=200" 
+                  alt="Professional project binding for thesis and academic work" 
                   className="w-full h-40 object-cover rounded-lg"
                 />
               </div>
@@ -104,8 +104,8 @@ const Home = () => {
               <h3 className="text-2xl font-bold text-gray-900 mb-4 underline decoration-2">Photo frame</h3>
               <div className="mb-6">
                 <img 
-                  src="https://images.unsplash.com/photo-1515378791036-0648a814c963?auto=format&fit=crop&q=80&w=300&h=200" 
-                  alt="Professional photo frames and framing services" 
+                  src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&q=80&w=300&h=200" 
+                  alt="Professional photo framing services and display frames" 
                   className="w-full h-40 object-cover rounded-lg"
                 />
               </div>
