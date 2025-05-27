@@ -39,44 +39,77 @@ const Home = () => {
       </div>
 
       {/* Services Section */}
-      <div className="py-16 bg-white">
+      <div className="py-16 bg-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900">Our Services</h2>
-            <p className="mt-4 text-xl text-gray-600">
-              High-quality printing solutions for all your needs
-            </p>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 underline decoration-4 decoration-gray-900">
+              our service
+            </h2>
           </div>
 
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-              <div className="w-12 h-12 bg-xerox-100 rounded-lg flex items-center justify-center">
-                <Copy className="h-6 w-6 text-xerox-600" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Printing */}
+            <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-800 p-6 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4 underline decoration-2">Printing</h3>
+              <div className="mb-6">
+                <img 
+                  src="https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?auto=format&fit=crop&q=80&w=300&h=200" 
+                  alt="Printing services" 
+                  className="w-full h-40 object-cover rounded-lg"
+                />
               </div>
-              <h3 className="mt-4 text-xl font-medium text-gray-900">Document Printing</h3>
-              <p className="mt-2 text-gray-600">
-                High-quality printing for documents, reports, presentations, and more.
-              </p>
+              <Button className="bg-blue-800 hover:bg-blue-900 text-white px-8 py-2 rounded-none">
+                <Link to="/order" className="text-white">
+                  Order now
+                </Link>
+              </Button>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-              <div className="w-12 h-12 bg-xerox-100 rounded-lg flex items-center justify-center">
-                <FileText className="h-6 w-6 text-xerox-600" />
+            {/* Spiral Binding */}
+            <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-800 p-6 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4 underline decoration-2">sprial binding</h3>
+              <div className="mb-6">
+                <img 
+                  src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=300&h=200" 
+                  alt="Spiral binding services" 
+                  className="w-full h-40 object-cover rounded-lg"
+                />
               </div>
-              <h3 className="mt-4 text-xl font-medium text-gray-900">Copy Services</h3>
-              <p className="mt-2 text-gray-600">
-                Fast and reliable copying for all your business and personal needs.
-              </p>
+              <Button className="bg-blue-800 hover:bg-blue-900 text-white px-8 py-2 rounded-none">
+                <Link to="/order" className="text-white">
+                  Order now
+                </Link>
+              </Button>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-              <div className="w-12 h-12 bg-xerox-100 rounded-lg flex items-center justify-center">
-                <Printer className="h-6 w-6 text-xerox-600" />
+            {/* Project Binding */}
+            <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-800 p-6 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4 underline decoration-2">project binding</h3>
+              <div className="mb-6">
+                <img 
+                  src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&q=80&w=300&h=200" 
+                  alt="Project binding services" 
+                  className="w-full h-40 object-cover rounded-lg"
+                />
               </div>
-              <h3 className="mt-4 text-xl font-medium text-gray-900">Photo Printing</h3>
-              <p className="mt-2 text-gray-600">
-                High-resolution photo printing on premium paper for vibrant results.
-              </p>
+              <Button className="bg-blue-800 hover:bg-blue-900 text-white px-8 py-2 rounded-none">
+                <Link to="/order" className="text-white">
+                  Order now
+                </Link>
+              </Button>
+            </div>
+
+            {/* Photo Frame */}
+            <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-800 p-6 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4 underline decoration-2">Photo frame</h3>
+              <div className="mb-6">
+                <img 
+                  src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&q=80&w=300&h=200" 
+                  alt="Photo frame services" 
+                  className="w-full h-40 object-cover rounded-lg"
+                />
+              </div>
+              <div className="text-gray-600 text-lg font-medium mb-4">comming soon</div>
             </div>
           </div>
         </div>
