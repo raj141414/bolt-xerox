@@ -13,6 +13,11 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
+              <img 
+                src="/lovable-uploads/e8c04aca-b737-4fd2-9259-04947199d9b5.png" 
+                alt="Aishwarya Xerox Logo" 
+                className="h-10 w-auto mr-3"
+              />
               <span className="text-2xl font-bold text-xerox-700">Aishwarya xerox</span>
             </Link>
           </div>
