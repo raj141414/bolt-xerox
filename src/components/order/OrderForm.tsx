@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Form, 
   FormControl, 
@@ -180,7 +180,7 @@ const OrderForm = () => {
   };
 
   // Watch form values for cost calculation
-  React.useEffect(() => {
+  useEffect(() => {
     const subscription = form.watch((value) => {
       if (totalPages > 0) {
         calculateCost(value as OrderFormValues);
