@@ -1,15 +1,15 @@
-
 import { useState, useRef, DragEvent, ChangeEvent } from 'react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Upload, X, File, FileText } from 'lucide-react';
+import { Upload, X, FileText } from 'lucide-react';
 import { fileStorage, StoredFile } from '@/services/fileStorage';
 
 interface FileUploaderProps {
   onFilesChange: (files: File[]) => void;
+  onPageCountChange: (pageCount: number) => void;
 }
 
-const FileUploader = ({ onFilesChange }: FileUploaderProps) => {
+const FileUploader = ({ onFilesChange, onPageCountChange }: FileUploaderProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -21,6 +21,15 @@ const FileUploader = ({ onFilesChange }: FileUploaderProps) => {
 
   const handleDragLeave = () => {
     setIsDragging(false);
+  };
+
+  const isValidFileType = (file: File) => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    return allowedTypes.includes(file.type);
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
@@ -39,14 +48,25 @@ const FileUploader = ({ onFilesChange }: FileUploaderProps) => {
   };
 
   const handleFiles = async (newFiles: File[]) => {
-    // Filter for accepted file types if needed
-    const validFiles = newFiles;
+    const validFiles = newFiles.filter(file => {
+      if (!isValidFileType(file)) {
+        toast.error(`${file.name} is not a valid file type. Only PDF and Word documents are allowed.`);
+        return false;
+      }
+      return true;
+    });
     
     if (validFiles.length > 0) {
       // Store each file in the FileStorage service
       for (const file of validFiles) {
         try {
           await fileStorage.saveFile(file);
+          
+          // Simulate page count detection
+          // In a real app, you would use a PDF/Word parser library
+          const pageCount = Math.floor(Math.random() * 20) + 1; // Random 1-20 pages
+          onPageCountChange(pageCount);
+          
         } catch (error) {
           console.error('Error storing file:', error);
           toast.error(`Failed to store ${file.name}`);
@@ -64,6 +84,7 @@ const FileUploader = ({ onFilesChange }: FileUploaderProps) => {
     const updatedFiles = files.filter((_, i) => i !== index);
     setFiles(updatedFiles);
     onFilesChange(updatedFiles);
+    onPageCountChange(0);
     toast.info("File removed");
   };
 
@@ -86,6 +107,7 @@ const FileUploader = ({ onFilesChange }: FileUploaderProps) => {
           type="file" 
           ref={fileInputRef}
           className="hidden"
+          accept=".pdf,.doc,.docx"
           multiple
           onChange={handleFileChange}
         />
@@ -95,7 +117,7 @@ const FileUploader = ({ onFilesChange }: FileUploaderProps) => {
         </p>
         <p className="text-gray-500">or click to browse</p>
         <p className="text-sm text-gray-500 mt-2">
-          Upload documents, images and other files for printing
+          Accepted formats: PDF and Word documents only
         </p>
       </div>
 
