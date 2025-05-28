@@ -63,16 +63,37 @@ const OrderForm = () => {
     },
   });
 
+  const calculateSelectedPagesCount = (selectedPagesStr: string, totalPages: number): number => {
+    if (selectedPagesStr === 'all') {
+      return totalPages;
+    }
+
+    const pageRanges = selectedPagesStr.split(',').map(range => range.trim());
+    let selectedPagesCount = 0;
+
+    for (const range of pageRanges) {
+      if (range.includes('-')) {
+        const [start, end] = range.split('-').map(Number);
+        if (!isNaN(start) && !isNaN(end) && start <= end) {
+          selectedPagesCount += (end - start + 1);
+        }
+      } else {
+        const page = Number(range);
+        if (!isNaN(page)) {
+          selectedPagesCount += 1;
+        }
+      }
+    }
+
+    return selectedPagesCount;
+  };
+
   const calculateCost = (values: OrderFormValues) => {
     const isColor = values.printType === 'color';
     const isDoubleSided = values.printSide === 'double';
     const copies = values.copies || 1;
     
-    let pagesCount = totalPages;
-    if (values.selectedPages !== 'all') {
-      const selectedPagesArray = values.selectedPages.split(',').map(p => p.trim());
-      pagesCount = selectedPagesArray.length;
-    }
+    let pagesCount = calculateSelectedPagesCount(values.selectedPages, totalPages);
     
     let costPerPage;
     if (isColor) {
@@ -84,8 +105,6 @@ const OrderForm = () => {
     let effectivePages = pagesCount;
     if (isDoubleSided) {
       effectivePages = Math.ceil(pagesCount / 2);
-    } else {
-      effectivePages = pagesCount; // For single-sided, use total pages
     }
     
     const totalCost = effectivePages * costPerPage * copies;
@@ -433,6 +452,13 @@ const OrderForm = () => {
                         placeholder="e.g., 1-5, 8, 11-13 or 'all'" 
                         {...field}
                         disabled={totalPages === 0}
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          // Recalculate cost when page selection changes
+                          const newValues = form.getValues();
+                          newValues.selectedPages = e.target.value;
+                          calculateCost(newValues);
+                        }}
                       />
                     </FormControl>
                     <p className="text-sm text-gray-500">
@@ -503,7 +529,7 @@ const OrderForm = () => {
                   </p>
                 </div>
                 <div className="mt-2 text-sm text-gray-600">
-                  <p>• {totalPages} pages {form.getValues('printSide') === 'double' ? `(${Math.ceil(totalPages/2)} sheets)` : ''}</p>
+                  <p>• Selected pages: {form.getValues('selectedPages')}</p>
                   <p>• {form.getValues('printType') === 'color' ? 'Color' : 'Black & White'} printing</p>
                   <p>• {form.getValues('printSide') === 'double' ? 'Double' : 'Single'}-sided</p>
                   <p>• {form.getValues('copies')} {form.getValues('copies') === 1 ? 'copy' : 'copies'}</p>
