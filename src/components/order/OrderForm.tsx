@@ -23,7 +23,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import FileUploader from './FileUploader';
-import { CheckCircle, Copy, Phone, Mail, Calculator } from "lucide-react";
+import { CheckCircle, Copy, Phone, Mail, Calculator, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 const orderSchema = z.object({
@@ -47,6 +47,7 @@ const OrderForm = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedPages, setSelectedPages] = useState('all');
   const [calculatedCost, setCalculatedCost] = useState(0);
+  const [filePreviewUrls, setFilePreviewUrls] = useState<string[]>([]);
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderSchema),
@@ -75,14 +76,16 @@ const OrderForm = () => {
     
     let costPerPage;
     if (isColor) {
-      costPerPage = isDoubleSided ? 13 : 8;
+      costPerPage = 8; // 8 rupees for color
     } else {
-      costPerPage = isDoubleSided ? 1.6 : 1.5;
+      costPerPage = isDoubleSided ? 1.6 : 1.5; // 1.5 rupees for B&W single side, 1.6 for double side
     }
     
     let effectivePages = pagesCount;
     if (isDoubleSided) {
       effectivePages = Math.ceil(pagesCount / 2);
+    } else {
+      effectivePages = pagesCount; // For single-sided, use total pages
     }
     
     const totalCost = effectivePages * costPerPage * copies;
@@ -92,6 +95,10 @@ const OrderForm = () => {
 
   const handleFilesChange = (uploadedFiles: File[]) => {
     setFiles(uploadedFiles);
+    
+    // Create preview URLs for the files
+    const urls = uploadedFiles.map(file => URL.createObjectURL(file));
+    setFilePreviewUrls(urls);
   };
 
   const handlePageCountChange = (pageCount: number) => {
@@ -99,6 +106,13 @@ const OrderForm = () => {
     form.setValue('selectedPages', `1-${pageCount}`);
     calculateCost(form.getValues());
   };
+
+  // Cleanup preview URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      filePreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [filePreviewUrls]);
 
   const copyOrderId = () => {
     navigator.clipboard.writeText(submittedOrderId);
@@ -176,6 +190,7 @@ const OrderForm = () => {
     setFiles([]);
     setTotalPages(0);
     setCalculatedCost(0);
+    setFilePreviewUrls([]);
     form.reset();
   };
 
@@ -454,6 +469,25 @@ const OrderForm = () => {
               onFilesChange={handleFilesChange} 
               onPageCountChange={handlePageCountChange}
             />
+
+            {files.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Uploaded Files Preview</h4>
+                <div className="space-y-3">
+                  {files.map((file, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <FileText className="h-5 w-5 text-xerox-600" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {calculatedCost > 0 && (
@@ -467,6 +501,12 @@ const OrderForm = () => {
                   <p className="text-2xl font-bold text-xerox-700">
                     ₹{calculatedCost.toFixed(2)}
                   </p>
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  <p>• {totalPages} pages {form.getValues('printSide') === 'double' ? `(${Math.ceil(totalPages/2)} sheets)` : ''}</p>
+                  <p>• {form.getValues('printType') === 'color' ? 'Color' : 'Black & White'} printing</p>
+                  <p>• {form.getValues('printSide') === 'double' ? 'Double' : 'Single'}-sided</p>
+                  <p>• {form.getValues('copies')} {form.getValues('copies') === 1 ? 'copy' : 'copies'}</p>
                 </div>
               </CardContent>
             </Card>
