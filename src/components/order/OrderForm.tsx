@@ -97,9 +97,9 @@ const OrderForm = () => {
     
     let costPerPage;
     if (isColor) {
-      costPerPage = 8; // 8 rupees for color
+      costPerPage = isDoubleSided ? 13 : 8; // 13 rupees for color double-sided, 8 for single
     } else {
-      costPerPage = isDoubleSided ? 1.6 : 1.5; // 1.5 rupees for B&W single side, 1.6 for double side
+      costPerPage = isDoubleSided ? 1.6 : 1.5; // 1.6 rupees for B&W double side, 1.5 for single
     }
     
     let effectivePages = pagesCount;
@@ -554,3 +554,5 @@ const OrderForm = () => {
 };
 
 export default OrderForm;
+
+export default OrderForm
