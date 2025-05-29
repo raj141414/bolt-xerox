@@ -554,5 +554,3 @@ const OrderForm = () => {
 };
 
 export default OrderForm;
-
-export default OrderForm
