@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Form, 
   FormControl, 
@@ -25,6 +25,9 @@ import { z } from "zod";
 import FileUploader from './FileUploader';
 import { CheckCircle, Copy, Phone, Mail, Calculator } from "lucide-react";
 import { toast } from "sonner";
+import { Document, Page } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 
 const orderSchema = z.object({
   fullName: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -47,6 +50,8 @@ const OrderForm = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedPages, setSelectedPages] = useState('all');
   const [calculatedCost, setCalculatedCost] = useState(0);
+  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+  const [numPages, setNumPages] = useState<number | null>(null);
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderSchema),
@@ -69,7 +74,13 @@ const OrderForm = () => {
     
     let pagesCount = totalPages;
     if (values.selectedPages !== 'all') {
-      const selectedPagesArray = values.selectedPages.split(',').map(p => p.trim());
+      const selectedPagesArray = values.selectedPages.split(',').map(p => {
+        if (p.includes('-')) {
+          const [start, end] = p.split('-').map(Number);
+          return Array.from({length: end - start + 1}, (_, i) => start + i);
+        }
+        return Number(p);
+      }).flat();
       pagesCount = selectedPagesArray.length;
     }
     
@@ -98,6 +109,10 @@ const OrderForm = () => {
     setTotalPages(pageCount);
     form.setValue('selectedPages', `1-${pageCount}`);
     calculateCost(form.getValues());
+  };
+
+  const handlePdfDataChange = (newPdfData: ArrayBuffer | null) => {
+    setPdfData(newPdfData);
   };
 
   const copyOrderId = () => {
@@ -176,6 +191,7 @@ const OrderForm = () => {
     setFiles([]);
     setTotalPages(0);
     setCalculatedCost(0);
+    setPdfData(null);
     form.reset();
   };
 
@@ -453,8 +469,30 @@ const OrderForm = () => {
             <FileUploader 
               onFilesChange={handleFilesChange} 
               onPageCountChange={handlePageCountChange}
+              onPdfDataChange={handlePdfDataChange}
             />
           </div>
+
+          {pdfData && (
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-medium mb-4">PDF Preview</h3>
+              <div className="max-h-[500px] overflow-y-auto border rounded-lg p-4">
+                <Document
+                  file={pdfData}
+                  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                >
+                  {Array.from(new Array(numPages), (el, index) => (
+                    <Page 
+                      key={`page_${index + 1}`} 
+                      pageNumber={index + 1}
+                      width={600}
+                      className="mb-4"
+                    />
+                  ))}
+                </Document>
+              </div>
+            </div>
+          )}
 
           {calculatedCost > 0 && (
             <Card className="bg-xerox-50 border-xerox-200">

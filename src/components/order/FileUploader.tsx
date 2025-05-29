@@ -3,13 +3,19 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Upload, X, FileText } from 'lucide-react';
 import { fileStorage, StoredFile } from '@/services/fileStorage';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface FileUploaderProps {
   onFilesChange: (files: File[]) => void;
   onPageCountChange: (pageCount: number) => void;
+  onPdfDataChange: (pdfData: ArrayBuffer | null) => void;
 }
 
-const FileUploader = ({ onFilesChange, onPageCountChange }: FileUploaderProps) => {
+const FileUploader = ({ onFilesChange, onPageCountChange, onPdfDataChange }: FileUploaderProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -57,26 +63,39 @@ const FileUploader = ({ onFilesChange, onPageCountChange }: FileUploaderProps) =
     });
     
     if (validFiles.length > 0) {
-      // Store each file in the FileStorage service
-      for (const file of validFiles) {
-        try {
-          await fileStorage.saveFile(file);
-          
-          // Simulate page count detection
-          // In a real app, you would use a PDF/Word parser library
-          const pageCount = Math.floor(Math.random() * 20) + 1; // Random 1-20 pages
-          onPageCountChange(pageCount);
-          
-        } catch (error) {
-          console.error('Error storing file:', error);
-          toast.error(`Failed to store ${file.name}`);
-        }
-      }
+      // Only handle the first file for now
+      const file = validFiles[0];
       
-      const updatedFiles = [...files, ...validFiles];
-      setFiles(updatedFiles);
-      onFilesChange(updatedFiles);
-      toast.success(`${validFiles.length} file(s) added`);
+      try {
+        // Store file in FileStorage service
+        await fileStorage.saveFile(file);
+        
+        // Read file for PDF preview if it's a PDF
+        if (file.type === 'application/pdf') {
+          const reader = new FileReader();
+          reader.onload = async (e) => {
+            const pdfData = e.target?.result as ArrayBuffer;
+            onPdfDataChange(pdfData);
+            
+            // Load PDF to get page count
+            const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
+            onPageCountChange(pdf.numPages);
+          };
+          reader.readAsArrayBuffer(file);
+        } else {
+          // For Word documents, use a placeholder page count
+          onPageCountChange(1);
+          onPdfDataChange(null);
+        }
+        
+        setFiles([file]);
+        onFilesChange([file]);
+        toast.success(`File added successfully`);
+        
+      } catch (error) {
+        console.error('Error handling file:', error);
+        toast.error(`Failed to process ${file.name}`);
+      }
     }
   };
 
@@ -85,6 +104,7 @@ const FileUploader = ({ onFilesChange, onPageCountChange }: FileUploaderProps) =
     setFiles(updatedFiles);
     onFilesChange(updatedFiles);
     onPageCountChange(0);
+    onPdfDataChange(null);
     toast.info("File removed");
   };
 
@@ -108,7 +128,6 @@ const FileUploader = ({ onFilesChange, onPageCountChange }: FileUploaderProps) =
           ref={fileInputRef}
           className="hidden"
           accept=".pdf,.doc,.docx"
-          multiple
           onChange={handleFileChange}
         />
         <Upload className="mx-auto h-12 w-12 text-xerox-500 mb-2" />
