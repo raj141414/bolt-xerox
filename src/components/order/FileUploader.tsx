@@ -1,17 +1,28 @@
-import { useState, useRef, DragEvent, ChangeEvent } from 'react';
+import { useState, useRef, DragEvent, ChangeEvent, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Upload, X, FileText } from 'lucide-react';
+import { Upload, X, FileText, Eye } from 'lucide-react';
 import { fileStorage, StoredFile } from '@/services/fileStorage';
+import { Document, Page, pdfjs } from 'react-pdf';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+// Initialize PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface FileUploaderProps {
   onFilesChange: (files: File[]) => void;
   onPageCountChange: (pageCount: number) => void;
+  onPageRangeChange: (range: string) => void;
 }
 
-const FileUploader = ({ onFilesChange, onPageCountChange }: FileUploaderProps) => {
+const FileUploader = ({ onFilesChange, onPageCountChange, onPageRangeChange }: FileUploaderProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -62,10 +73,22 @@ const FileUploader = ({ onFilesChange, onPageCountChange }: FileUploaderProps) =
         try {
           await fileStorage.saveFile(file);
           
-          // Simulate page count detection
-          // In a real app, you would use a PDF/Word parser library
-          const pageCount = Math.floor(Math.random() * 20) + 1; // Random 1-20 pages
-          onPageCountChange(pageCount);
+          // For PDF files, get the actual page count
+          if (file.type === 'application/pdf') {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+              const typedarray = new Uint8Array(e.target?.result as ArrayBuffer);
+              const pdf = await pdfjs.getDocument(typedarray).promise;
+              onPageCountChange(pdf.numPages);
+              onPageRangeChange(`1-${pdf.numPages}`);
+            };
+            reader.readAsArrayBuffer(file);
+          } else {
+            // For non-PDF files, simulate page count
+            const pageCount = Math.floor(Math.random() * 20) + 1;
+            onPageCountChange(pageCount);
+            onPageRangeChange(`1-${pageCount}`);
+          }
           
         } catch (error) {
           console.error('Error storing file:', error);
@@ -85,6 +108,7 @@ const FileUploader = ({ onFilesChange, onPageCountChange }: FileUploaderProps) =
     setFiles(updatedFiles);
     onFilesChange(updatedFiles);
     onPageCountChange(0);
+    onPageRangeChange('all');
     toast.info("File removed");
   };
 
@@ -92,6 +116,33 @@ const FileUploader = ({ onFilesChange, onPageCountChange }: FileUploaderProps) =
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
+  };
+
+  const handlePreview = (file: File) => {
+    setSelectedFile(file);
+    setPreviewOpen(true);
+  };
+
+  const handlePageSelect = (pageNum: number) => {
+    const newSelectedPages = new Set(selectedPages);
+    if (selectedPages.has(pageNum)) {
+      newSelectedPages.delete(pageNum);
+    } else {
+      newSelectedPages.add(pageNum);
+    }
+    setSelectedPages(newSelectedPages);
+    
+    // Convert selected pages to range string
+    if (newSelectedPages.size > 0) {
+      const pages = Array.from(newSelectedPages).sort((a, b) => a - b);
+      onPageRangeChange(pages.join(','));
+    } else {
+      onPageRangeChange('all');
+    }
+  };
+
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
   };
 
   return (
@@ -136,21 +187,72 @@ const FileUploader = ({ onFilesChange, onPageCountChange }: FileUploaderProps) =
                     </p>
                   </div>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFile(index);
-                  }}
-                >
-                  <X className="h-4 w-4 text-gray-500" />
-                </Button>
+                <div className="flex gap-2">
+                  {file.type === 'application/pdf' && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePreview(file);
+                      }}
+                    >
+                      <Eye className="h-4 w-4 text-gray-500" />
+                    </Button>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFile(index);
+                    }}
+                  >
+                    <X className="h-4 w-4 text-gray-500" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>PDF Preview</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-full w-full rounded-md border p-4">
+            {selectedFile && (
+              <Document
+                file={selectedFile}
+                onLoadSuccess={onDocumentLoadSuccess}
+                className="flex flex-col items-center"
+              >
+                {Array.from(new Array(numPages), (_, index) => (
+                  <div key={index + 1} className="mb-4 relative">
+                    <div 
+                      className={`absolute inset-0 cursor-pointer transition-colors ${
+                        selectedPages.has(index + 1) ? 'bg-blue-200/50' : 'hover:bg-gray-100/50'
+                      }`}
+                      onClick={() => handlePageSelect(index + 1)}
+                    />
+                    <Page
+                      pageNumber={index + 1}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                      width={600}
+                    />
+                    <p className="text-center text-sm text-gray-500 mt-2">
+                      Page {index + 1} of {numPages}
+                    </p>
+                  </div>
+                ))}
+              </Document>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
