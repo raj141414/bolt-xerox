@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import PageLayout from '@/components/layout/PageLayout';
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,8 @@ interface Order {
   orderDate: string;
   status: string;
   files: Array<{ name: string; size: number; type: string; path?: string }>;
+  totalCost: number;
+  printSide: string;
 }
 
 const TrackOrder = () => {
@@ -63,10 +64,10 @@ const TrackOrder = () => {
         return <Clock className="h-5 w-5 text-yellow-500" />;
       case 'processing':
         return <Package className="h-5 w-5 text-blue-500" />;
-      case 'ready':
+      case 'completed':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'delivered':
-        return <Truck className="h-5 w-5 text-green-600" />;
+      case 'cancelled':
+        return <Package className="h-5 w-5 text-red-500" />;
       default:
         return <Clock className="h-5 w-5 text-gray-500" />;
     }
@@ -78,12 +79,20 @@ const TrackOrder = () => {
         return 'Order Received';
       case 'processing':
         return 'Processing';
-      case 'ready':
+      case 'completed':
         return 'Ready for Pickup';
-      case 'delivered':
-        return 'Delivered';
+      case 'cancelled':
+        return 'Cancelled';
       default:
         return 'Unknown Status';
+    }
+  };
+
+  const getPrintTypeName = (type: string) => {
+    switch (type) {
+      case 'blackAndWhite': return 'Black & White';
+      case 'color': return 'Color';
+      default: return type;
     }
   };
 
@@ -168,9 +177,11 @@ const TrackOrder = () => {
                     <div>
                       <h4 className="font-medium text-gray-900 mb-3">Print Details</h4>
                       <div className="space-y-2 text-sm">
-                        <p><span className="font-medium">Print Type:</span> {order.printType}</p>
+                        <p><span className="font-medium">Print Type:</span> {getPrintTypeName(order.printType)}</p>
+                        <p><span className="font-medium">Print Side:</span> {order.printSide === 'double' ? 'Double Sided' : 'Single Sided'}</p>
                         <p><span className="font-medium">Copies:</span> {order.copies}</p>
                         <p><span className="font-medium">Paper Size:</span> {order.paperSize.toUpperCase()}</p>
+                        <p><span className="font-medium">Total Cost:</span> ₹{order.totalCost?.toFixed(2) || '0.00'}</p>
                       </div>
                     </div>
                   </div>

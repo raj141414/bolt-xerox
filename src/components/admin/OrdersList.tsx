@@ -31,6 +31,8 @@ type Order = {
   files: OrderFile[];
   orderDate: string;
   status: string;
+  totalCost: number;
+  printSide: string;
 };
 
 const OrdersList = () => {
@@ -56,7 +58,8 @@ const OrdersList = () => {
       
       return {
         ...order,
-        files: processedFiles
+        files: processedFiles,
+        status: order.status || 'pending' // Ensure status has a default value
       };
     });
     
@@ -76,6 +79,8 @@ const OrdersList = () => {
     if (selectedOrder?.orderId === orderId) {
       setSelectedOrder({ ...selectedOrder, status: newStatus });
     }
+
+    toast.success(`Order status updated to ${newStatus}`);
   };
 
   const viewOrderDetails = (order: Order) => {
@@ -210,6 +215,7 @@ const OrdersList = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Print Type</TableHead>
                 <TableHead>Copies</TableHead>
+                <TableHead>Cost</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -222,6 +228,7 @@ const OrdersList = () => {
                   <TableCell>{formatDate(order.orderDate)}</TableCell>
                   <TableCell>{getPrintTypeName(order.printType)}</TableCell>
                   <TableCell>{order.copies}</TableCell>
+                  <TableCell>₹{order.totalCost?.toFixed(2) || '0.00'}</TableCell>
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell>
                     <Button 
@@ -301,7 +308,7 @@ const OrdersList = () => {
               
               <div className="border-t pt-4">
                 <h3 className="font-medium text-gray-700">Print Details</h3>
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-2 grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Print Type</p>
                     <p>{getPrintTypeName(selectedOrder.printType)}</p>
@@ -313,6 +320,10 @@ const OrdersList = () => {
                   <div>
                     <p className="text-sm text-gray-500">Paper Size</p>
                     <p>{getPaperSizeName(selectedOrder.paperSize)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Total Cost</p>
+                    <p className="font-semibold">₹{selectedOrder.totalCost?.toFixed(2) || '0.00'}</p>
                   </div>
                 </div>
               </div>
