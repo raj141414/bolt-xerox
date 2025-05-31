@@ -126,6 +126,11 @@ const OrderForm = () => {
     calculateCost(form.getValues());
   };
 
+  const handlePageRangeChange = (pageRange: string) => {
+    form.setValue('selectedPages', pageRange);
+    calculateCost(form.getValues());
+  };
+
   // Cleanup preview URLs when component unmounts
   useEffect(() => {
     return () => {
@@ -494,6 +499,7 @@ const OrderForm = () => {
             <FileUploader 
               onFilesChange={handleFilesChange} 
               onPageCountChange={handlePageCountChange}
+              onPageRangeChange={handlePageRangeChange}
             />
 
             {files.length > 0 && (
