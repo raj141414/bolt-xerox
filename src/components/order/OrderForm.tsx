@@ -34,6 +34,8 @@ const orderSchema = z.object({
   paperSize: z.string(),
   printSide: z.string(),
   selectedPages: z.string(),
+  colorPages: z.string().optional(),
+  bwPages: z.string().optional(),
   specialInstructions: z.string().optional(),
 });
 
@@ -48,6 +50,7 @@ const OrderForm = () => {
   const [selectedPages, setSelectedPages] = useState('all');
   const [calculatedCost, setCalculatedCost] = useState(0);
   const [filePreviewUrls, setFilePreviewUrls] = useState<string[]>([]);
+  const [isCustomPrint, setIsCustomPrint] = useState(false);
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderSchema),
@@ -59,6 +62,8 @@ const OrderForm = () => {
       paperSize: "a4",
       printSide: "single",
       selectedPages: "all",
+      colorPages: "",
+      bwPages: "",
       specialInstructions: "",
     },
   });
@@ -89,25 +94,77 @@ const OrderForm = () => {
   };
 
   const calculateCost = (values: OrderFormValues) => {
-    const isColor = values.printType === 'color';
     const isDoubleSided = values.printSide === 'double';
     const copies = values.copies || 1;
     
-    let pagesCount = calculateSelectedPagesCount(values.selectedPages, totalPages);
+    let totalCost = 0;
     
-    let costPerPage;
-    if (isColor) {
-      costPerPage = isDoubleSided ? 13 : 8; // 13 rupees for color double-sided, 8 for single
+    if (values.printType === 'custom') {
+      // Calculate cost for color pages
+      if (values.colorPages) {
+        const colorPageRanges = values.colorPages.split(',').map(range => range.trim());
+        let colorPagesCount = 0;
+        
+        for (const range of colorPageRanges) {
+          if (range.includes('-')) {
+            const [start, end] = range.split('-').map(Number);
+            if (!isNaN(start) && !isNaN(end) && start <= end) {
+              colorPagesCount += (end - start + 1);
+            }
+          } else {
+            const page = Number(range);
+            if (!isNaN(page)) {
+              colorPagesCount += 1;
+            }
+          }
+        }
+        
+        const colorCostPerPage = isDoubleSided ? 13 : 8;
+        totalCost += colorPagesCount * colorCostPerPage;
+      }
+      
+      // Calculate cost for B&W pages
+      if (values.bwPages) {
+        const bwPageRanges = values.bwPages.split(',').map(range => range.trim());
+        let bwPagesCount = 0;
+        
+        for (const range of bwPageRanges) {
+          if (range.includes('-')) {
+            const [start, end] = range.split('-').map(Number);
+            if (!isNaN(start) && !isNaN(end) && start <= end) {
+              bwPagesCount += (end - start + 1);
+            }
+          } else {
+            const page = Number(range);
+            if (!isNaN(page)) {
+              bwPagesCount += 1;
+            }
+          }
+        }
+        
+        const bwCostPerPage = isDoubleSided ? 1.6 : 1.5;
+        totalCost += bwPagesCount * bwCostPerPage;
+      }
     } else {
-      costPerPage = isDoubleSided ? 1.6 : 1.5; // 1.6 rupees for B&W double side, 1.5 for single
+      const isColor = values.printType === 'color';
+      let pagesCount = calculateSelectedPagesCount(values.selectedPages, totalPages);
+      
+      let costPerPage;
+      if (isColor) {
+        costPerPage = isDoubleSided ? 13 : 8;
+      } else {
+        costPerPage = isDoubleSided ? 1.6 : 1.5;
+      }
+      
+      let effectivePages = pagesCount;
+      if (isDoubleSided) {
+        effectivePages = Math.ceil(pagesCount / 2);
+      }
+      
+      totalCost = effectivePages * costPerPage;
     }
     
-    let effectivePages = pagesCount;
-    if (isDoubleSided) {
-      effectivePages = Math.ceil(pagesCount / 2);
-    }
-    
-    const totalCost = effectivePages * costPerPage * copies;
+    totalCost *= copies;
     setCalculatedCost(totalCost);
     return totalCost;
   };
@@ -173,7 +230,16 @@ const OrderForm = () => {
       return;
     }
 
-    if (!validatePageSelection(data.selectedPages, totalPages)) {
+    if (data.printType === 'custom') {
+      if (!data.colorPages && !data.bwPages) {
+        showToast({
+          title: "Page selection required",
+          description: "Please specify either color or black & white pages.",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else if (!validatePageSelection(data.selectedPages, totalPages)) {
       showToast({
         title: "Invalid page selection",
         description: "Please check your page selection.",
@@ -215,6 +281,7 @@ const OrderForm = () => {
     setTotalPages(0);
     setCalculatedCost(0);
     setFilePreviewUrls([]);
+    setIsCustomPrint(false);
     form.reset();
   };
 
@@ -227,6 +294,16 @@ const OrderForm = () => {
     });
     return () => subscription.unsubscribe();
   }, [form.watch, totalPages]);
+
+  // Watch print type for custom printing option
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'printType') {
+        setIsCustomPrint(value.printType === 'custom');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
 
   if (orderSubmitted) {
     return (
@@ -350,7 +427,10 @@ const OrderForm = () => {
                   <FormItem>
                     <FormLabel>Print Type</FormLabel>
                     <Select 
-                      onValueChange={field.onChange} 
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        setIsCustomPrint(value === 'custom');
+                      }} 
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -361,6 +441,7 @@ const OrderForm = () => {
                       <SelectContent>
                         <SelectItem value="blackAndWhite">Black & White</SelectItem>
                         <SelectItem value="color">Color</SelectItem>
+                        <SelectItem value="custom">Custom (Mix Color & B/W)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -446,33 +527,88 @@ const OrderForm = () => {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="selectedPages"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Page Selection</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="e.g., 1-5, 8, 11-13 or 'all'" 
-                        {...field}
-                        disabled={totalPages === 0}
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
-                          // Recalculate cost when page selection changes
-                          const newValues = form.getValues();
-                          newValues.selectedPages = e.target.value;
-                          calculateCost(newValues);
-                        }}
-                      />
-                    </FormControl>
-                    <p className="text-sm text-gray-500">
-                      {totalPages > 0 ? `Total pages: ${totalPages}` : 'Upload a file to select pages'}
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!isCustomPrint && (
+                <FormField
+                  control={form.control}
+                  name="selectedPages"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Page Selection</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., 1-5, 8, 11-13 or 'all'" 
+                          {...field}
+                          disabled={totalPages === 0}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            const newValues = form.getValues();
+                            newValues.selectedPages = e.target.value;
+                            calculateCost(newValues);
+                          }}
+                        />
+                      </FormControl>
+                      <p className="text-sm text-gray-500">
+                        {totalPages > 0 ? `Total pages: ${totalPages}` : 'Upload a file to select pages'}
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {isCustomPrint && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="colorPages"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Color Pages</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="e.g., 1-3, 5, 7-9" 
+                            {...field}
+                            disabled={totalPages === 0}
+                            onChange={(e) => {
+                              field.onChange(e.target.value);
+                              calculateCost(form.getValues());
+                            }}
+                          />
+                        </FormControl>
+                        <p className="text-sm text-gray-500">
+                          Specify pages to print in color
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="bwPages"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Black & White Pages</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="e.g., 4, 6, 10-12" 
+                            {...field}
+                            disabled={totalPages === 0}
+                            onChange={(e) => {
+                              field.onChange(e.target.value);
+                              calculateCost(form.getValues());
+                            }}
+                          />
+                        </FormControl>
+                        <p className="text-sm text-gray-500">
+                          Specify pages to print in black & white
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
             </div>
 
             <FormField
@@ -535,8 +671,18 @@ const OrderForm = () => {
                   </p>
                 </div>
                 <div className="mt-2 text-sm text-gray-600">
-                  <p>• Selected pages: {form.getValues('selectedPages')}</p>
-                  <p>• {form.getValues('printType') === 'color' ? 'Color' : 'Black & White'} printing</p>
+                  {!isCustomPrint && (
+                    <>
+                      <p>• Selected pages: {form.getValues('selectedPages')}</p>
+                      <p>• {form.getValues('printType') === 'color' ? 'Color' : 'Black & White'} printing</p>
+                    </>
+                  )}
+                  {isCustomPrint && (
+                    <>
+                      <p>• Color pages: {form.getValues('colorPages') || 'None'}</p>
+                      <p>• B&W pages: {form.getValues('bwPages') || 'None'}</p>
+                    </>
+                  )}
                   <p>• {form.getValues('printSide') === 'double' ? 'Double' : 'Single'}-sided</p>
                   <p>• {form.getValues('copies')} {form.getValues('copies') === 1 ? 'copy' : 'copies'}</p>
                 </div>

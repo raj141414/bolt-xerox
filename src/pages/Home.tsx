@@ -2,8 +2,38 @@ import PageLayout from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Printer, Copy, FileText, CheckCircle, Clock, BookOpen, Image, Bookmark } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const Home = () => {
+  const carouselImages = [
+    {
+      url: "https://images.pexels.com/photos/6814537/pexels-photo-6814537.jpeg",
+      alt: "Professional printing services"
+    },
+    {
+      url: "https://images.pexels.com/photos/6615076/pexels-photo-6615076.jpeg",
+      alt: "Modern printing equipment"
+    },
+    {
+      url: "https://images.pexels.com/photos/5905500/pexels-photo-5905500.jpeg",
+      alt: "Document printing"
+    },
+    {
+      url: "https://images.pexels.com/photos/6177645/pexels-photo-6177645.jpeg",
+      alt: "Print shop services"
+    },
+    {
+      url: "https://images.pexels.com/photos/5905558/pexels-photo-5905558.jpeg",
+      alt: "Professional printing"
+    }
+  ];
+
   return (
     <PageLayout>
       {/* Hero Section */}
@@ -27,11 +57,21 @@ const Home = () => {
               </div>
             </div>
             <div className="flex justify-center">
-              <img 
-                src="https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&q=80&w=600&h=600" 
-                alt="Printing services" 
-                className="rounded-lg shadow-lg max-w-full" 
-              />
+              <Carousel className="w-full max-w-lg">
+                <CarouselContent>
+                  {carouselImages.map((image, index) => (
+                    <CarouselItem key={index}>
+                      <img 
+                        src={image.url} 
+                        alt={image.alt}
+                        className="rounded-lg shadow-lg w-full h-[400px] object-cover" 
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
             </div>
           </div>
         </div>
