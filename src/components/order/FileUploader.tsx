@@ -68,12 +68,10 @@ const FileUploader = ({ onFilesChange, onPageCountChange, onPageRangeChange }: F
     });
     
     if (validFiles.length > 0) {
-      // Store each file in the FileStorage service
       for (const file of validFiles) {
         try {
           await fileStorage.saveFile(file);
           
-          // For PDF files, get the actual page count
           if (file.type === 'application/pdf') {
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -84,7 +82,6 @@ const FileUploader = ({ onFilesChange, onPageCountChange, onPageRangeChange }: F
             };
             reader.readAsArrayBuffer(file);
           } else {
-            // For non-PDF files, simulate page count
             const pageCount = Math.floor(Math.random() * 20) + 1;
             onPageCountChange(pageCount);
             onPageRangeChange(`1-${pageCount}`);
@@ -118,7 +115,9 @@ const FileUploader = ({ onFilesChange, onPageCountChange, onPageRangeChange }: F
     }
   };
 
-  const handlePreview = (file: File) => {
+  const handlePreview = (e: React.MouseEvent, file: File) => {
+    e.preventDefault();
+    e.stopPropagation();
     setSelectedFile(file);
     setPreviewOpen(true);
   };
@@ -132,7 +131,6 @@ const FileUploader = ({ onFilesChange, onPageCountChange, onPageRangeChange }: F
     }
     setSelectedPages(newSelectedPages);
     
-    // Convert selected pages to range string
     if (newSelectedPages.size > 0) {
       const pages = Array.from(newSelectedPages).sort((a, b) => a - b);
       onPageRangeChange(pages.join(','));
@@ -192,10 +190,7 @@ const FileUploader = ({ onFilesChange, onPageCountChange, onPageRangeChange }: F
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePreview(file);
-                      }}
+                      onClick={(e) => handlePreview(e, file)}
                     >
                       <Eye className="h-4 w-4 text-gray-500" />
                     </Button>

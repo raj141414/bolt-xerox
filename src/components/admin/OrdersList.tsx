@@ -33,6 +33,9 @@ type Order = {
   status: string;
   totalCost: number;
   printSide: string;
+  selectedPages?: string;
+  colorPages?: string;
+  bwPages?: string;
 };
 
 const OrdersList = () => {
@@ -41,17 +44,11 @@ const OrdersList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
-    // In a real app, you would fetch from an API
     const storedOrders = JSON.parse(localStorage.getItem('xeroxOrders') || '[]');
-    
-    // Process orders to ensure all files have paths
     const processedOrders = storedOrders.map((order: Order) => {
-      // Ensure all files in the order have proper paths
       const processedFiles = order.files.map(file => {
         if (!file.path) {
-          // Create a standard path format if it's missing
           file.path = `/uploads/${file.name}`;
-          console.log(`Added missing path for file: ${file.name}`, file);
         }
         return file;
       });
@@ -59,12 +56,11 @@ const OrdersList = () => {
       return {
         ...order,
         files: processedFiles,
-        status: order.status || 'pending' // Ensure status has a default value
+        status: order.status || 'pending'
       };
     });
     
     setOrders(processedOrders);
-    // Also update localStorage with the fixed data
     localStorage.setItem('xeroxOrders', JSON.stringify(processedOrders));
   }, []);
 
@@ -95,7 +91,7 @@ const OrdersList = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline\" className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
       case 'processing':
         return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Processing</Badge>;
       case 'completed':
@@ -111,6 +107,7 @@ const OrdersList = () => {
     switch (type) {
       case 'blackAndWhite': return 'Black & White';
       case 'color': return 'Color';
+      case 'custom': return 'Custom (Mixed)';
       case 'premium': return 'Premium Color';
       default: return type;
     }
@@ -123,73 +120,45 @@ const OrdersList = () => {
   const handleFileDownload = (file: OrderFile) => {
     try {
       if (!file.path) {
-        // If path is still missing, create it based on filename
         file.path = `/uploads/${file.name}`;
-        console.log("Created missing path for file:", file);
       }
       
-      console.log("Attempting to download file with path:", file.path);
-      
-      // Use the fileStorage service to retrieve the file
       const storedFile = fileStorage.getFile(file.path);
       
       if (!storedFile) {
-        console.error("File not found in storage:", file.path);
-        
-        // List available files for debugging
         const allFiles = fileStorage.getAllFiles();
-        console.log("Available files in storage:", allFiles.map(f => f.path));
-        
-        // Try to find by name as fallback
         const fileByName = allFiles.find(f => f.name === file.name);
         if (fileByName) {
-          console.log("Found file by name instead:", fileByName);
-          
-          // Create a URL for the blob
           const url = fileStorage.createDownloadUrl(fileByName);
           if (url) {
-            // Create a temporary anchor element
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
             a.download = file.name;
             document.body.appendChild(a);
-            
-            // Trigger download
             a.click();
-            
-            // Clean up
             URL.revokeObjectURL(url);
             document.body.removeChild(a);
             toast.success(`Downloading ${file.name}`);
             return;
           }
         }
-        
         toast.error("File not found in storage");
         return;
       }
       
       if (!storedFile.data) {
-        console.error("File data is missing:", file.path);
         toast.error("File data is not available");
         return;
       }
       
-      // Create a URL for the blob
       const url = URL.createObjectURL(storedFile.data);
-      
-      // Create a temporary anchor element
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = url;
       a.download = file.name;
       document.body.appendChild(a);
-      
-      // Trigger download
       a.click();
-      
-      // Clean up
       URL.revokeObjectURL(url);
       document.body.removeChild(a);
       toast.success(`Downloading ${file.name}`);
@@ -308,21 +277,33 @@ const OrdersList = () => {
               
               <div className="border-t pt-4">
                 <h3 className="font-medium text-gray-700">Print Details</h3>
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Print Type</p>
                     <p>{getPrintTypeName(selectedOrder.printType)}</p>
+                    {selectedOrder.printType === 'custom' && (
+                      <>
+                        <p className="mt-2 text-sm text-gray-500">Color Pages</p>
+                        <p>{selectedOrder.colorPages || 'None'}</p>
+                        <p className="mt-2 text-sm text-gray-500">B&W Pages</p>
+                        <p>{selectedOrder.bwPages || 'None'}</p>
+                      </>
+                    )}
+                    {selectedOrder.printType !== 'custom' && selectedOrder.selectedPages && (
+                      <>
+                        <p className="mt-2 text-sm text-gray-500">Selected Pages</p>
+                        <p>{selectedOrder.selectedPages}</p>
+                      </>
+                    )}
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Copies</p>
-                    <p>{selectedOrder.copies}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Paper Size</p>
+                    <p className="text-sm text-gray-500">Print Side</p>
+                    <p>{selectedOrder.printSide === 'double' ? 'Double Sided' : 'Single Sided'}</p>
+                    <p className="mt-2 text-sm text-gray-500">Paper Size</p>
                     <p>{getPaperSizeName(selectedOrder.paperSize)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Total Cost</p>
+                    <p className="mt-2 text-sm text-gray-500">Copies</p>
+                    <p>{selectedOrder.copies}</p>
+                    <p className="mt-2 text-sm text-gray-500">Total Cost</p>
                     <p className="font-semibold">₹{selectedOrder.totalCost?.toFixed(2) || '0.00'}</p>
                   </div>
                 </div>
