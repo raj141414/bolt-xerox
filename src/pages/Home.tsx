@@ -1,7 +1,7 @@
 import PageLayout from '@/components/layout/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Printer, Copy, FileText, CheckCircle, Clock, BookOpen, Image, Bookmark } from 'lucide-react';
+import { Printer, FileText, CheckCircle, Clock, BookOpen, Image, Bookmark } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
@@ -9,8 +9,10 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { useEffect, useState } from 'react';
 
 const Home = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
   const carouselImages = [
     {
       url: "https://images.pexels.com/photos/6814537/pexels-photo-6814537.jpeg",
@@ -33,6 +35,14 @@ const Home = () => {
       alt: "Professional printing"
     }
   ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
+    }, 3000); // Change slide every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <PageLayout>
@@ -57,7 +67,11 @@ const Home = () => {
               </div>
             </div>
             <div className="flex justify-center">
-              <Carousel className="w-full max-w-lg">
+              <Carousel 
+                className="w-full max-w-lg"
+                selectedIndex={currentSlide}
+                setSelectedIndex={setCurrentSlide}
+              >
                 <CarouselContent>
                   {carouselImages.map((image, index) => (
                     <CarouselItem key={index}>
@@ -222,3 +236,5 @@ const Home = () => {
 };
 
 export default Home;
+
+export default Home
